@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>재고 관리</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #F4F6FB; min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: linear-gradient(135deg, #1A237E, #3949AB); padding: 22px 32px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { color: white; font-size: 20px; font-weight: 900; }
+  .btn-add { background: #FFD700; color: #1A237E; border: none; border-radius: 10px; padding: 10px 20px; font-size: 14px; font-weight: 900; cursor: pointer; }
+  .btn-add:hover { background: #FFC200; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 20px 24px 0; max-width: 1100px; margin: 0 auto; }
+  .stat-card { background: white; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--c); }
+  .stat-icon { font-size: 20px; }
+  .stat-num { font-size: 24px; font-weight: 900; color: var(--c); margin: 4px 0 2px; }
+  .stat-label { font-size: 12px; color: #888; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 8px; padding: 16px 24px 0; max-width: 1100px; margin: 0 auto; }
+  .tab-btn { padding: 8px 20px; border-radius: 10px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; background: white; color: #555; box-shadow: 0 2px 6px rgba(0,0,0,0.07); transition: all .2s; }
+  .tab-btn.active { background: #3949AB; color: white; }
+
+  /* CONTENT */
+  .content { max-width: 1100px; margin: 0 auto; padding: 16px 24px 40px; }
+
+  /* FILTER BAR */
+  .filter-bar { background: white; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .filter-bar input, .filter-bar select { padding: 8px 12px; border-radius: 8px; border: 1px solid #DDD; font-size: 13px; outline: none; background: white; text-align: center; }
+  .filter-bar input { flex: 1 1 160px; text-align: left; }
+  .count-label { font-size: 12px; color: #aaa; margin-left: auto; }
+
+  /* TABLE */
+  .table-wrap { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: #F8F9FF; border-bottom: 2px solid #E8EAF6; }
+  th { padding: 12px 14px; text-align: center; color: #555; font-weight: 700; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid #F0F0F0; transition: background .15s; }
+  tbody tr:hover { background: #F0F4FF !important; }
+  td { padding: 11px 14px; text-align: center; vertical-align: middle; }
+  .td-name { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; color: #1A237E; }
+  .stock-bar-wrap { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .stock-bar { width: 54px; height: 6px; background: #EEE; border-radius: 3px; overflow: hidden; }
+  .stock-fill { height: 100%; border-radius: 3px; }
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .price { font-weight: 700; color: #3949AB; }
+  .action-btns { display: flex; gap: 6px; justify-content: center; }
+  .btn-edit { background: #E3F2FD; color: #1976D2; border: none; border-radius: 7px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 700; }
+  .btn-del  { background: #FFEBEE; color: #E53935; border: none; border-radius: 7px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: 700; }
+  .date-cell { cursor: pointer; color: #444; }
+  .date-cell.empty { color: #bbb; }
+  .inline-date { display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .inline-date input[type=date] { padding: 3px 7px; border-radius: 7px; border: 1px solid #3949AB; font-size: 12px; }
+  .btn-save { background: #43A047; color: white; border: none; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px; font-weight: 700; }
+  .btn-cancel { background: #EEE; border: none; border-radius: 6px; padding: 4px 7px; cursor: pointer; font-size: 11px; }
+  .empty-row td { text-align: center; padding: 40px; color: #aaa; }
+
+  /* MODAL */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal { background: white; border-radius: 18px; padding: 28px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal h2 { font-size: 18px; font-weight: 900; color: #1A237E; margin-bottom: 20px; }
+  .form-label { font-size: 12px; font-weight: 700; color: #555; display: block; margin-bottom: 6px; }
+  .form-input { width: 100%; padding: 9px 13px; border-radius: 9px; border: 1px solid #DDD; font-size: 13px; outline: none; margin-bottom: 14px; box-sizing: border-box; }
+  .form-select { width: 100%; padding: 9px 13px; border-radius: 9px; border: 1px solid #DDD; font-size: 13px; background: white; margin-bottom: 20px; box-sizing: border-box; }
+  .icon-grid { display: flex; flex-wrap: wrap; gap: 6px; background: #F8F9FF; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
+  .icon-btn { font-size: 22px; width: 42px; height: 42px; background: white; border: 2px solid #EEE; border-radius: 9px; cursor: pointer; transition: all .15s; }
+  .icon-btn.selected { background: #3949AB; border-color: #3949AB; }
+  .icon-direct { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .icon-direct span.lbl { font-size: 12px; color: #888; }
+  .icon-direct input { width: 50px; padding: 4px 8px; border-radius: 7px; border: 1px solid #DDD; font-size: 18px; text-align: center; }
+  .icon-preview { font-size: 28px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .btn-cancel2 { flex: 1; padding: 12px; border: 1px solid #DDD; border-radius: 10px; background: white; font-weight: 700; cursor: pointer; font-size: 14px; }
+  .btn-save2 { flex: 2; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, #3949AB, #1A237E); color: white; font-weight: 900; cursor: pointer; font-size: 14px; }
+
+  /* ADJUST MODAL */
+  .adjust-type { display: flex; gap: 8px; margin-bottom: 16px; }
+  .type-btn { flex: 1; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 13px; cursor: pointer; transition: all .2s; }
+  .current-stock { background: #F0F4FF; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 18px; }
+  .current-stock .lbl { font-size: 12px; color: #888; }
+  .current-stock .num { font-size: 30px; font-weight: 900; color: #3949AB; }
+  .after-preview { text-align: center; margin-top: 8px; font-size: 13px; color: #555; }
+
+  /* TOAST */
+  #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 10px 24px; border-radius: 24px; color: white; font-size: 13px; font-weight: 700; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 999; display: none; }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>📦 재고 관리</h1>
+  <button class="btn-add" onclick="openAdd()">+ 재고 추가</button>
+</div>
+
+<!-- STATS -->
+<div class="stats" id="stats"></div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab-btn active" id="tab-list"    onclick="switchTab('list')">📋 재고 목록</button>
+  <button class="tab-btn"        id="tab-history" onclick="switchTab('history')">🕐 입출고 이력</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+  <div id="panel-list">
+    <div class="filter-bar">
+      <input type="text" id="search" placeholder="🔍 재고 검색..." oninput="render()"/>
+      <select id="catFilter" onchange="render()">
+        <option>전체</option><option>굿즈</option><option>포장용품</option><option>음료</option><option>컵</option><option>기타</option>
+      </select>
+      <select id="statusFilter" onchange="render()">
+        <option>전체</option><option>정상</option><option>부족</option><option>품절</option>
+      </select>
+      <select id="sortBy" onchange="render()">
+        <option value="name">이름순</option>
+        <option value="stock_asc">재고현황 적은순</option>
+        <option value="stock_desc">재고현황 많은순</option>
+        <option value="cost">개당 비용 높은순</option>
+      </select>
+      <span class="count-label" id="countLabel"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>상품명</th><th>카테고리</th><th>재고현황</th><th>입고일</th><th>개당 비용</th><th>상태</th><th>관리</th>
+        </tr></thead>
+        <tbody id="itemTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="panel-history" style="display:none">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>일시</th><th>상품명</th><th>구분</th><th>수량</th><th>변경 전</th><th>변경 후</th>
+        </tr></thead>
+        <tbody id="histTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 추가/수정 모달 -->
+<div class="overlay" id="modalForm" style="display:none" onclick="overlayClose(event,'modalForm')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h2 id="modalTitle">➕ 재고 추가</h2>
+    <label class="form-label">아이콘 선택</label>
+    <div class="icon-grid" id="iconGrid"></div>
+    <div class="icon-direct">
+      <span class="lbl">직접 입력:</span>
+      <input type="text" id="fIcon" maxlength="2" oninput="syncIcon()"/>
+      <span class="icon-preview" id="iconPreview"></span>
+    </div>
+    <label class="form-label">상품명</label>
+    <input class="form-input" type="text"   id="fName"     placeholder="상품명 입력"/>
+    <label class="form-label">개당 비용</label>
+    <input class="form-input" type="number" id="fCost"     placeholder="0"/>
+    <label class="form-label">현재 재고</label>
+    <input class="form-input" type="number" id="fStock"    placeholder="0"/>
+    <label class="form-label">최소 재고 (알림 기준)</label>
+    <input class="form-input" type="number" id="fMinStock" placeholder="0"/>
+    <label class="form-label">입고일</label>
+    <input class="form-input" type="date"   id="fDate"/>
+    <label class="form-label">카테고리</label>
+    <select class="form-select" id="fCat">
+      <option>굿즈</option><option>포장용품</option><option>음료</option><option>컵</option><option>기타</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel2" onclick="closeModal('modalForm')">취소</button>
+      <button class="btn-save2"   onclick="saveItem()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 재고 조정 모달 -->
+<div class="overlay" id="modalAdjust" style="display:none" onclick="overlayClose(event,'modalAdjust')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:360px">
+    <h2>📥 재고 조정</h2>
+    <p id="adjustName" style="color:#888;font-size:13px;margin-bottom:16px;"></p>
+    <div class="current-stock">
+      <div class="lbl">현재 재고</div>
+      <div class="num" id="adjustCurrent"></div>
+    </div>
+    <div class="adjust-type">
+      <button class="type-btn" id="btnIn"  onclick="setAdjType('in')"  style="background:#43A047;color:white;border:2px solid #43A047;">📦 입고</button>
+      <button class="type-btn" id="btnOut" onclick="setAdjType('out')" style="background:white;color:#555;border:2px solid #EEE;">📤 출고</button>
+    </div>
+    <label class="form-label">수량</label>
+    <input class="form-input" type="number" id="adjQty" min="1" placeholder="수량 입력" oninput="showAfter()"/>
+    <div class="after-preview" id="afterPreview"></div>
+    <div class="modal-btns" style="margin-top:20px;">
+      <button class="btn-cancel2" onclick="closeModal('modalAdjust')">취소</button>
+      <button class="btn-save2"   id="btnApply" onclick="applyAdjust()">입고 처리</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ICONS = ["📦","🔑","👜","🛍️","☕","🥤","🧊","🎁","💎","🔥","⭐","🎯","🚀","🛒","🧃","🍵","🧴","🪣","📋","🏷️"];
+
+let items = [
+  {id:1, name:"로고 키링",      category:"굿즈",    cost:5000,  stock:10, minStock:3,  icon:"🔑", inboundDate:"2026-02-01"},
+  {id:2, name:"에코백",         category:"굿즈",    cost:12000, stock:2,  minStock:3,  icon:"👜", inboundDate:"2026-02-05"},
+  {id:3, name:"테이크아웃 봉투",category:"포장용품",cost:800,   stock:99, minStock:10, icon:"🛍️", inboundDate:"2026-01-20"},
+  {id:4, name:"아메리카노",     category:"음료",    cost:3000,  stock:1,  minStock:2,  icon:"☕", inboundDate:"2026-02-24"},
+  {id:5, name:"텀블러",         category:"컵",      cost:15000, stock:8,  minStock:5,  icon:"🥤", inboundDate:"2026-02-10"},
+  {id:6, name:"포장 박스",      category:"포장용품",cost:300,   stock:20, minStock:5,  icon:"📦", inboundDate:"2026-01-15"},
+  {id:7, name:"아이스티",       category:"음료",    cost:2500,  stock:0,  minStock:10, icon:"🧊", inboundDate:"2026-02-20"},
+  {id:8, name:"머그컵",         category:"컵",      cost:8000,  stock:4,  minStock:3,  icon:"☕", inboundDate:"2026-02-12"},
+];
+
+let history = [
+  {id:1, itemName:"에코백",      type:"출고", qty:3,  before:5,  after:2,  date:"2026-02-25 14:32"},
+  {id:2, itemName:"아메리카노",  type:"출고", qty:2,  before:3,  after:1,  date:"2026-02-24 09:10"},
+  {id:3, itemName:"포장 박스",   type:"입고", qty:10, before:10, after:20, date:"2026-02-23 16:45"},
+];
+
+let editId = null, adjId = null, adjType = "in", editingDateId = null;
+
+function status(stock, min) {
+  if (stock === 0)    return {label:"품절", color:"#E53935", bg:"#FFEBEE"};
+  if (stock <= min)   return {label:"부족", color:"#FFA000", bg:"#FFF8E1"};
+  return                     {label:"정상", color:"#43A047", bg:"#E8F5E9"};
+}
+
+function renderStats() {
+  const total  = items.length;
+  const normal = items.filter(i=>status(i.stock,i.minStock).label==="정상").length;
+  const low    = items.filter(i=>status(i.stock,i.minStock).label==="부족").length;
+  const out    = items.filter(i=>i.stock===0).length;
+  document.getElementById("stats").innerHTML = [
+    {label:"전체 재고", value:total,  color:"#3949AB", icon:"📦"},
+    {label:"정상 재고", value:normal, color:"#43A047", icon:"✅"},
+    {label:"재고 부족", value:low,    color:"#FFA000", icon:"⚠️"},
+    {label:"품절",      value:out,    color:"#E53935", icon:"🚫"},
+  ].map(d=>`<div class="stat-card" style="--c:${d.color}">
+    <div class="stat-icon">${d.icon}</div>
+    <div class="stat-num">${d.value}</div>
+    <div class="stat-label">${d.label}</div>
+  </div>`).join("");
+}
+
+function render() {
+  renderStats();
+  const search = document.getElementById("search").value;
+  const cat    = document.getElementById("catFilter").value;
+  const sf     = document.getElementById("statusFilter").value;
+  const sort   = document.getElementById("sortBy").value;
+  let list = [...items];
+  if (search) list = list.filter(i=>i.name.includes(search));
+  if (cat !== "전체") list = list.filter(i=>i.category===cat);
+  if (sf  !== "전체") list = list.filter(i=>status(i.stock,i.minStock).label===sf);
+  if (sort==="stock_asc")  list.sort((a,b)=>a.stock-b.stock);
+  else if (sort==="stock_desc") list.sort((a,b)=>b.stock-a.stock);
+  else if (sort==="cost")  list.sort((a,b)=>b.cost-a.cost);
+  else list.sort((a,b)=>a.name.localeCompare(b.name));
+  document.getElementById("countLabel").textContent = `총 ${list.length}개`;
+  const tbody = document.getElementById("itemTbody");
+  if (!list.length) { tbody.innerHTML=`<tr class="empty-row"><td colspan="7">검색 결과가 없습니다</td></tr>`; return; }
+  tbody.innerHTML = list.map((item,idx)=>{
+    const st  = status(item.stock, item.minStock);
+    const pct = Math.min(100,(item.stock/Math.max(item.minStock*3,1))*100);
+    const dateCell = editingDateId===item.id
+      ? `<div class="inline-date">
+           <input type="date" id="dateInput_${item.id}" value="${item.inboundDate||''}"/>
+           <button class="btn-save"   onclick="saveDate(${item.id})">저장</button>
+           <button class="btn-cancel" onclick="cancelDate()">✕</button>
+         </div>`
+      : `<span class="date-cell ${item.inboundDate?'':'empty'}" onclick="startEditDate(${item.id})">
+           ${item.inboundDate||'날짜 입력'} ✏️
+         </span>`;
+    return `<tr style="background:${idx%2===0?'white':'#FAFAFA'}">
+      <td><div class="td-name"><span>${item.icon}</span>${item.name}</div></td>
+      <td>${item.category}</td>
+      <td><div class="stock-bar-wrap">
+        <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${st.color}"></div></div>
+        <b style="color:${st.color}">${item.stock}</b>
+      </div></td>
+      <td>${dateCell}</td>
+      <td class="price">₩ ${item.cost.toLocaleString()}</td>
+      <td><span class="badge" style="background:${st.bg};color:${st.color}">${st.label}</span></td>
+      <td><div class="action-btns">
+        <button class="btn-edit" onclick="openEdit(${item.id})">✏️ 수정</button>
+        <button class="btn-del"  onclick="deleteItem(${item.id})">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderHistory() {
+  const tbody = document.getElementById("histTbody");
+  if (!history.length) { tbody.innerHTML=`<tr class="empty-row"><td colspan="6">이력이 없습니다</td></tr>`; return; }
+  tbody.innerHTML = history.map((h,idx)=>
+    `<tr style="background:${idx%2===0?'white':'#FAFAFA'}">
+      <td>${h.date}</td><td><b>${h.itemName}</b></td>
+      <td><span class="badge" style="background:${h.type==='입고'?'#E8F5E9':'#FFEBEE'};color:${h.type==='입고'?'#43A047':'#E53935'}">${h.type}</span></td>
+      <td><b>${h.qty}개</b></td>
+      <td style="color:#888">${h.before}개</td>
+      <td style="font-weight:700;color:${h.type==='입고'?'#43A047':'#E53935'}">${h.after}개</td>
+    </tr>`
+  ).join("");
+}
+
+function switchTab(t) {
+  document.getElementById("panel-list").style.display    = t==="list"    ? "" : "none";
+  document.getElementById("panel-history").style.display = t==="history" ? "" : "none";
+  document.getElementById("tab-list").classList.toggle("active",    t==="list");
+  document.getElementById("tab-history").classList.toggle("active", t==="history");
+  if (t==="history") renderHistory();
+}
+
+function buildIconGrid(selected) {
+  document.getElementById("iconGrid").innerHTML = ICONS.map(ic=>
+    `<button class="icon-btn ${ic===selected?'selected':''}" onclick="selectIcon('${ic}')">${ic}</button>`
+  ).join("");
+  document.getElementById("fIcon").value = selected;
+  document.getElementById("iconPreview").textContent = selected;
+}
+function selectIcon(ic) { document.getElementById("fIcon").value=ic; document.getElementById("iconPreview").textContent=ic; buildIconGrid(ic); }
+function syncIcon()      { const v=document.getElementById("fIcon").value; document.getElementById("iconPreview").textContent=v; buildIconGrid(v); }
+
+function openAdd() {
+  editId=null;
+  document.getElementById("modalTitle").textContent="➕ 재고 추가";
+  ["fName","fCost","fStock","fMinStock","fDate"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("fCat").value="굿즈";
+  buildIconGrid("📦");
+  document.getElementById("modalForm").style.display="flex";
+}
+function openEdit(id) {
+  editId=id;
+  const item=items.find(i=>i.id===id);
+  document.getElementById("modalTitle").textContent="✏️ 재고 수정";
+  document.getElementById("fName").value    =item.name;
+  document.getElementById("fCost").value    =item.cost;
+  document.getElementById("fStock").value   =item.stock;
+  document.getElementById("fMinStock").value=item.minStock;
+  document.getElementById("fDate").value    =item.inboundDate||"";
+  document.getElementById("fCat").value     =item.category;
+  buildIconGrid(item.icon);
+  document.getElementById("modalForm").style.display="flex";
+}
+function closeModal(id)        { document.getElementById(id).style.display="none"; }
+function overlayClose(e,id)    { if(e.target===document.getElementById(id)) closeModal(id); }
+
+function saveItem() {
+  const name=document.getElementById("fName").value.trim();
+  const cost=document.getElementById("fCost").value;
+  const stock=document.getElementById("fStock").value;
+  const min=document.getElementById("fMinStock").value;
+  const icon=document.getElementById("fIcon").value||"📦";
+  const date=document.getElementById("fDate").value;
+  const cat=document.getElementById("fCat").value;
+  if(!name||cost===""||stock===""||min==="") { showToast("모든 항목을 입력해주세요","error"); return; }
+  if(editId) {
+    items=items.map(i=>i.id===editId?{...i,name,cost:+cost,stock:+stock,minStock:+min,icon,inboundDate:date,category:cat}:i);
+    showToast(`"${name}" 재고가 수정되었습니다 ✅`);
+  } else {
+    items.push({id:Date.now(),name,cost:+cost,stock:+stock,minStock:+min,icon,inboundDate:date,category:cat});
+    showToast(`"${name}" 재고가 추가되었습니다 ✅`);
+  }
+  closeModal("modalForm"); render();
+}
+function deleteItem(id) {
+  const name=items.find(i=>i.id===id)?.name;
+  items=items.filter(i=>i.id!==id);
+  showToast(`"${name}" 삭제 완료`); render();
+}
+
+function startEditDate(id) { editingDateId=id; render(); }
+function cancelDate()      { editingDateId=null; render(); }
+function saveDate(id) {
+  const val=document.getElementById(`dateInput_${id}`)?.value||"";
+  items=items.map(i=>i.id===id?{...i,inboundDate:val}:i);
+  editingDateId=null;
+  showToast("입고일이 저장되었습니다 ✅"); render();
+}
+
+function openAdjust(id) {
+  adjId=id;
+  const item=items.find(i=>i.id===id);
+  document.getElementById("adjustName").textContent    =`${item.icon} ${item.name}`;
+  document.getElementById("adjustCurrent").textContent =`${item.stock}개`;
+  document.getElementById("adjQty").value="";
+  document.getElementById("afterPreview").textContent="";
+  setAdjType("in");
+  document.getElementById("modalAdjust").style.display="flex";
+}
+function setAdjType(t) {
+  adjType=t;
+  const btnIn=document.getElementById("btnIn"), btnOut=document.getElementById("btnOut");
+  btnIn.style.cssText  = t==="in"  ? "flex:1;padding:10px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;background:#43A047;color:white;border:2px solid #43A047;"
+                                    : "flex:1;padding:10px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;background:white;color:#555;border:2px solid #EEE;";
+  btnOut.style.cssText = t==="out" ? "flex:1;padding:10px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;background:#E53935;color:white;border:2px solid #E53935;"
+                                    : "flex:1;padding:10px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;background:white;color:#555;border:2px solid #EEE;";
+  document.getElementById("btnApply").textContent=t==="in"?"입고 처리":"출고 처리";
+  document.getElementById("btnApply").style.background=t==="in"?"linear-gradient(135deg,#43A047,#2E7D32)":"linear-gradient(135deg,#E53935,#B71C1C)";
+  showAfter();
+}
+function showAfter() {
+  const qty=parseInt(document.getElementById("adjQty").value);
+  const item=items.find(i=>i.id===adjId);
+  if(!item||isNaN(qty)) { document.getElementById("afterPreview").textContent=""; return; }
+  const after=adjType==="in"?item.stock+qty:Math.max(0,item.stock-qty);
+  document.getElementById("afterPreview").innerHTML=`변경 후: <b style="color:${adjType==='in'?'#43A047':'#E53935'}">${after}개</b>`;
+}
+function applyAdjust() {
+  const qty=parseInt(document.getElementById("adjQty").value);
+  if(isNaN(qty)||qty<=0) { showToast("올바른 수량을 입력하세요","error"); return; }
+  const item=items.find(i=>i.id===adjId);
+  const before=item.stock, after=adjType==="in"?before+qty:Math.max(0,before-qty);
+  items=items.map(i=>i.id===adjId?{...i,stock:after}:i);
+  const now=new Date();
+  const dateStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  history.unshift({id:Date.now(),itemName:item.name,type:adjType==="in"?"입고":"출고",qty,before,after,date:dateStr});
+  showToast(`재고 ${adjType==="in"?"입고":"출고"} 완료 (${before} → ${after})`);
+  closeModal("modalAdjust"); render();
+}
+
+function showToast(msg,type="success") {
+  const el=document.getElementById("toast");
+  el.textContent=msg;
+  el.style.background=type==="error"?"#E53935":"#43A047";
+  el.style.display="block";
+  setTimeout(()=>el.style.display="none",2500);
+}
+
+render();
+</script>
+</body>
+</html>
