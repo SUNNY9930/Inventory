@@ -140,7 +140,7 @@
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>상품명</th><th>카테고리</th><th>재고현황</th><th>입고일</th><th>개당 비용</th><th>상태</th><th>관리</th>
+          <th>상품명</th><th>카테고리</th><th>재고현황</th><th>입고일</th><th>개당 비용</th><th>상태</th><th>비고</th><th>관리</th>
         </tr></thead>
         <tbody id="itemTbody"></tbody>
       </table>
@@ -321,7 +321,7 @@ function render() {
   else list.sort((a,b)=>a.name.localeCompare(b.name));
   document.getElementById("countLabel").textContent = `총 ${list.length}개`;
   const tbody = document.getElementById("itemTbody");
-  if (!list.length) { tbody.innerHTML=`<tr class="empty-row"><td colspan="7">검색 결과가 없습니다</td></tr>`; return; }
+  if (!list.length) { tbody.innerHTML=`<tr class="empty-row"><td colspan="8">검색 결과가 없습니다</td></tr>`; return; }
   tbody.innerHTML = list.map((item,idx)=>{
     const st  = status(item.stock, item.minStock);
     const pct = Math.min(100,(item.stock/Math.max(item.minStock*3,1))*100);
@@ -344,6 +344,7 @@ function render() {
       <td>${dateCell}</td>
       <td class="price">₩ ${item.cost.toLocaleString()}</td>
       <td><span class="badge" style="background:${st.bg};color:${st.color}">${st.label}</span></td>
+      <td style="color:#666;font-size:12px;max-width:140px;word-break:break-all">${item.note||'-'}</td>
       <td><div class="action-btns">
         <button class="btn-edit" onclick="openEdit(${item.id})">✏️ 수정</button>
         <button class="btn-del"  onclick="deleteItem(${item.id})">🗑️</button>
