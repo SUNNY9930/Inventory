@@ -195,6 +195,8 @@
     <select class="form-select" id="fCat">
       <option>굿즈</option><option>포장용품</option><option>음료</option><option>컵</option><option>기타</option>
     </select>
+    <label class="form-label">비고</label>
+    <input class="form-input" type="text" id="fNote" placeholder="비고 입력 (선택)"/>
     <div class="modal-btns">
       <button class="btn-cancel2" onclick="closeModal('modalForm')">취소</button>
       <button class="btn-save2"   onclick="saveItem()">저장</button>
@@ -312,9 +314,9 @@ function resetData() {
 }
 
 function status(stock, min) {
-  if (stock === 0)    return {label:"품절", color:"#E53935", bg:"#FFEBEE"};
-  if (stock <= min)   return {label:"부족", color:"#FFA000", bg:"#FFF8E1"};
-  return                     {label:"정상", color:"#43A047", bg:"#E8F5E9"};
+  if (stock === 0)          return {label:"품절", color:"#E53935", bg:"#FFEBEE"};
+  if (stock < 30 || stock <= min) return {label:"부족", color:"#FFA000", bg:"#FFF8E1"};
+  return                          {label:"정상", color:"#43A047", bg:"#E8F5E9"};
 }
 
 function renderStats() {
@@ -418,6 +420,7 @@ function openAdd() {
   document.getElementById("modalTitle").textContent="➕ 재고 추가";
   ["fName","fCost","fStock","fMinStock","fDate"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("fCat").value="굿즈";
+  document.getElementById("fNote").value="";
   buildIconGrid("📦");
   document.getElementById("modalForm").style.display="flex";
 }
@@ -431,6 +434,7 @@ function openEdit(id) {
   document.getElementById("fMinStock").value=item.minStock;
   document.getElementById("fDate").value    =item.inboundDate||"";
   document.getElementById("fCat").value     =item.category;
+  document.getElementById("fNote").value   =item.note||"";
   buildIconGrid(item.icon);
   document.getElementById("modalForm").style.display="flex";
 }
@@ -445,12 +449,13 @@ function saveItem() {
   const icon=document.getElementById("fIcon").value||"📦";
   const date=document.getElementById("fDate").value;
   const cat=document.getElementById("fCat").value;
+  const note=document.getElementById("fNote").value.trim();
   if(!name) { showToast("상품명을 입력해주세요","error"); return; }
   if(editId) {
-    items=items.map(i=>i.id===editId?{...i,name,cost:cost===""?i.cost:+cost,stock:stock===""?i.stock:+stock,minStock:min===""?i.minStock:+min,icon,inboundDate:date,category:cat}:i);
+    items=items.map(i=>i.id===editId?{...i,name,cost:cost===""?i.cost:+cost,stock:stock===""?i.stock:+stock,minStock:min===""?i.minStock:+min,icon,inboundDate:date,category:cat,note}:i);
     showToast(`"${name}" 재고가 수정되었습니다 ✅`);
   } else {
-    items.push({id:Date.now(),name,cost:cost===""?0:+cost,stock:stock===""?0:+stock,minStock:min===""?0:+min,icon,inboundDate:date,category:cat});
+    items.push({id:Date.now(),name,cost:cost===""?0:+cost,stock:stock===""?0:+stock,minStock:min===""?0:+min,icon,inboundDate:date,category:cat,note});
     showToast(`"${name}" 재고가 추가되었습니다 ✅`);
   }
   closeModal("modalForm"); saveDB(); render();
