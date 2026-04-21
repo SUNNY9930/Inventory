@@ -15,14 +15,14 @@
   .btn-add:hover { background: #FFC200; }
 
   /* STATS */
-  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 20px 24px 0; max-width: 1100px; margin: 0 auto; }
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; padding: 20px 24px 0; max-width: 100%; margin: 0 auto; }
   .stat-card { background: white; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid var(--c); }
   .stat-icon { font-size: 20px; }
   .stat-num { font-size: 24px; font-weight: 900; color: var(--c); margin: 4px 0 2px; }
   .stat-label { font-size: 12px; color: #888; }
 
   /* CONTENT */
-  .content { max-width: 1100px; margin: 0 auto; padding: 16px 24px 40px; }
+  .content { max-width: 100%; margin: 0 auto; padding: 16px 24px 40px; }
 
   /* FILTER BAR */
   .filter-bar { background: white; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
@@ -65,9 +65,6 @@
   .icon-grid { display: flex; flex-wrap: wrap; gap: 6px; background: #F8F9FF; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
   .icon-btn { font-size: 22px; width: 42px; height: 42px; background: white; border: 2px solid #EEE; border-radius: 9px; cursor: pointer; transition: all .15s; }
   .icon-btn.selected { background: #3949AB; border-color: #3949AB; }
-  .icon-direct { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-  .icon-direct span.lbl { font-size: 12px; color: #888; }
-  .icon-direct input { width: 50px; padding: 4px 8px; border-radius: 7px; border: 1px solid #DDD; font-size: 18px; text-align: center; }
   .icon-preview { font-size: 28px; }
   .modal-btns { display: flex; gap: 10px; }
   .btn-cancel2 { flex: 1; padding: 12px; border: 1px solid #DDD; border-radius: 10px; background: white; font-weight: 700; cursor: pointer; font-size: 14px; }
@@ -155,11 +152,8 @@
     <h2 id="modalTitle">➕ 재고 추가</h2>
     <label class="form-label">아이콘 선택</label>
     <div class="icon-grid" id="iconGrid"></div>
-    <div class="icon-direct">
-      <span class="lbl">직접 입력:</span>
-      <input type="text" id="fIcon" maxlength="2" oninput="syncIcon()"/>
-      <span class="icon-preview" id="iconPreview"></span>
-    </div>
+    <input type="hidden" id="fIcon"/>
+    <span class="icon-preview" id="iconPreview" style="font-size:28px;display:block;margin-bottom:14px"></span>
     <label class="form-label">상품명</label>
     <input class="form-input" type="text"   id="fName"     placeholder="상품명 입력"/>
     <label class="form-label">개당 비용</label>
@@ -400,7 +394,6 @@ function buildIconGrid(selected) {
   document.getElementById("iconPreview").textContent = selected;
 }
 function selectIcon(ic) { document.getElementById("fIcon").value=ic; document.getElementById("iconPreview").textContent=ic; buildIconGrid(ic); }
-function syncIcon()      { const v=document.getElementById("fIcon").value; document.getElementById("iconPreview").textContent=v; buildIconGrid(v); }
 
 function openAdd() {
   editId=null;
