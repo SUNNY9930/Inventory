@@ -73,10 +73,6 @@
   .form-label { font-size: 12px; font-weight: 700; color: #555; display: block; margin-bottom: 6px; }
   .form-input { width: 100%; padding: 9px 13px; border-radius: 9px; border: 1px solid #DDD; font-size: 13px; outline: none; margin-bottom: 14px; box-sizing: border-box; }
   .form-select { width: 100%; padding: 9px 13px; border-radius: 9px; border: 1px solid #DDD; font-size: 13px; background: white; margin-bottom: 20px; box-sizing: border-box; }
-  .icon-grid { display: flex; flex-wrap: wrap; gap: 6px; background: #F8F9FF; border-radius: 10px; padding: 10px; margin-bottom: 8px; }
-  .icon-btn { font-size: 22px; width: 42px; height: 42px; background: white; border: 2px solid #EEE; border-radius: 9px; cursor: pointer; transition: all .15s; }
-  .icon-btn.selected { background: #3949AB; border-color: #3949AB; }
-  .icon-preview { font-size: 28px; }
   .modal-btns { display: flex; gap: 10px; }
   .btn-cancel2 { flex: 1; padding: 12px; border: 1px solid #DDD; border-radius: 10px; background: white; font-weight: 700; cursor: pointer; font-size: 14px; }
   .btn-save2 { flex: 2; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, #3949AB, #1A237E); color: white; font-weight: 900; cursor: pointer; font-size: 14px; }
@@ -169,10 +165,6 @@
 <div class="overlay" id="modalForm" style="display:none" onclick="overlayClose(event,'modalForm')">
   <div class="modal" onclick="event.stopPropagation()">
     <h2 id="modalTitle">➕ 재고 추가</h2>
-    <label class="form-label">아이콘 선택</label>
-    <div class="icon-grid" id="iconGrid"></div>
-    <input type="hidden" id="fIcon"/>
-    <span class="icon-preview" id="iconPreview" style="font-size:28px;display:block;margin-bottom:14px"></span>
     <label class="form-label">상품명</label>
     <input class="form-input" type="text"   id="fName"     placeholder="상품명 입력"/>
     <label class="form-label">개당 비용</label>
@@ -248,7 +240,6 @@ const supa = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNheGd2cnJyZ3VydXB0aHVzd3BvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NDQwODYsImV4cCI6MjA5MjIyMDA4Nn0.Hi_6Pllunk2JQnuwID-x_qDmiZbRXakIm3Bw8q3jaqc'
 );
 
-const ICONS = ["📦","🔑","👜","🛍️","☕","🥤","🧊","🎁","💎","🔥","⭐","🎯","🚀","🛒","🧃","🍵","🧴","🪣","📋","🏷️"];
 
 const DEFAULT_ITEMS = [
   {id:1, name:"로고 키링",      category:"굿즈",    cost:5000,  stock:10, minStock:3,  icon:"🔑", inboundDate:"2026-02-01", note:""},
@@ -266,7 +257,7 @@ let editId = null, adjId = null, adjType = "in", editingDateId = null;
 
 function toRow(item) {
   return { id: item.id, name: item.name, category: item.category, cost: item.cost,
-           stock: item.stock, min_stock: item.minStock, icon: item.icon,
+           stock: item.stock, min_stock: item.minStock,
            inbound_date: item.inboundDate || null, note: item.note || '',
            flea_market_price: item.fleaMarketPrice ?? null,
            gift_set: item.giftSet || '',
@@ -276,7 +267,7 @@ function toRow(item) {
 }
 function fromRow(row) {
   return { id: row.id, name: row.name, category: row.category, cost: row.cost,
-           stock: row.stock, minStock: row.min_stock, icon: row.icon,
+           stock: row.stock, minStock: row.min_stock,
            inboundDate: row.inbound_date || '', note: row.note || '',
            fleaMarketPrice: row.flea_market_price ?? null,
            giftSet: row.gift_set || '',
@@ -395,7 +386,7 @@ function render() {
            ${item.inboundDate||'날짜 입력'} ✏️
          </span>`;
     return `<tr style="background:${idx%2===0?'white':'#FAFAFA'}">
-      <td><div class="td-name"><span>${item.icon}</span>${item.name}</div></td>
+      <td><div class="td-name">${item.name}</div></td>
       <td>${item.category}</td>
       <td><div class="stock-bar-wrap">
         <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${st.color}"></div></div>
@@ -418,14 +409,6 @@ function render() {
   }).join("");
 }
 
-function buildIconGrid(selected) {
-  document.getElementById("iconGrid").innerHTML = ICONS.map(ic=>
-    `<button class="icon-btn ${ic===selected?'selected':''}" onclick="selectIcon('${ic}')">${ic}</button>`
-  ).join("");
-  document.getElementById("fIcon").value = selected;
-  document.getElementById("iconPreview").textContent = selected;
-}
-function selectIcon(ic) { document.getElementById("fIcon").value=ic; document.getElementById("iconPreview").textContent=ic; buildIconGrid(ic); }
 function previewQuotation(input) {
   const file = input.files[0];
   const preview = document.getElementById("quotationPreview");
@@ -449,7 +432,6 @@ function openAdd() {
   document.getElementById("fQuotationFile").value="";
   document.getElementById("quotationPreview").innerHTML="";
   document.getElementById("quotationCurrent").style.display="none";
-  buildIconGrid("📦");
   document.getElementById("modalForm").style.display="flex";
 }
 function openEdit(id) {
@@ -476,7 +458,6 @@ function openEdit(id) {
       ? `<img src="${item.quotation}" class="quotation-preview-img"/><div class="quotation-file-name" style="margin-top:4px">현재 파일 · 변경하려면 새 파일 선택</div>`
       : `<a href="${item.quotation}" target="_blank" style="color:#3949AB;font-weight:700">📄 현재 파일 보기</a> <span style="color:#aaa;font-size:11px">· 변경하려면 새 파일 선택</span>`;
   } else { qCurr.style.display="none"; }
-  buildIconGrid(item.icon);
   document.getElementById("modalForm").style.display="flex";
 }
 function closeModal(id)     { document.getElementById(id).style.display="none"; }
@@ -486,7 +467,6 @@ async function saveItem() {
   const name  = document.getElementById("fName").value.trim();
   const cost  = document.getElementById("fCost").value;
   const stock = document.getElementById("fStock").value;
-  const icon  = document.getElementById("fIcon").value||"📦";
   const date  = document.getElementById("fDate").value;
   const cat         = document.getElementById("fCat").value;
   const note        = document.getElementById("fNote").value.trim();
@@ -509,11 +489,11 @@ async function saveItem() {
   if (!name) { showToast("상품명을 입력해주세요","error"); return; }
   let target;
   if (editId) {
-    items  = items.map(i=>i.id===editId?{...i,name,cost:cost===""?i.cost:+cost,stock:stock===""?i.stock:+stock,icon,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?i.fleaMarketPrice:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation}:i);
+    items  = items.map(i=>i.id===editId?{...i,name,cost:cost===""?i.cost:+cost,stock:stock===""?i.stock:+stock,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?i.fleaMarketPrice:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation}:i);
     target = items.find(i=>i.id===editId);
     showToast(`"${name}" 재고가 수정되었습니다 ✅`);
   } else {
-    target = {id:Date.now(),name,cost:cost===""?0:+cost,stock:stock===""?0:+stock,icon,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?null:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation};
+    target = {id:Date.now(),name,cost:cost===""?0:+cost,stock:stock===""?0:+stock,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?null:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation};
     items.push(target);
     showToast(`"${name}" 재고가 추가되었습니다 ✅`);
   }
@@ -542,7 +522,7 @@ async function saveDate(id) {
 function openAdjust(id) {
   adjId=id;
   const item=items.find(i=>i.id===id);
-  document.getElementById("adjustName").textContent    =`${item.icon} ${item.name}`;
+  document.getElementById("adjustName").textContent    =item.name;
   document.getElementById("adjustCurrent").textContent =`${item.stock}개`;
   document.getElementById("adjQty").value="";
   document.getElementById("afterPreview").textContent="";
