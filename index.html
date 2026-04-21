@@ -177,18 +177,16 @@
     <input class="form-input" type="text"   id="fName"     placeholder="상품명 입력"/>
     <label class="form-label">개당 비용</label>
     <input class="form-input" type="number" id="fCost"     placeholder=""/>
+    <label class="form-label">플리마켓 가격</label>
+    <input class="form-input" type="number" id="fFleaPrice" placeholder=""/>
     <label class="form-label">현재 재고</label>
     <input class="form-input" type="number" id="fStock"    placeholder=""/>
-    <label class="form-label">최소 재고 (알림 기준)</label>
-    <input class="form-input" type="number" id="fMinStock" placeholder=""/>
     <label class="form-label">입고일</label>
     <input class="form-input" type="date"   id="fDate"/>
     <label class="form-label">카테고리</label>
     <select class="form-select" id="fCat">
       <option>굿즈</option><option>포장용품</option><option>음료</option><option>컵</option><option>기타</option>
     </select>
-    <label class="form-label">플리마켓 가격</label>
-    <input class="form-input" type="number" id="fFleaPrice" placeholder=""/>
     <label class="form-label">선물세트</label>
     <select class="form-select" id="fGiftSet">
       <option value="">선택 안함</option>
@@ -344,15 +342,15 @@ async function resetData() {
   render(); showToast("초기화 완료");
 }
 
-function status(stock, min) {
-  if (stock === 0)                return {label:"품절", color:"#E53935", bg:"#FFEBEE"};
-  if (stock < 30 || stock <= min) return {label:"부족", color:"#FFA000", bg:"#FFF8E1"};
-  return                                 {label:"정상", color:"#43A047", bg:"#E8F5E9"};
+function status(stock) {
+  if (stock === 0)   return {label:"품절", color:"#E53935", bg:"#FFEBEE"};
+  if (stock < 30)    return {label:"부족", color:"#FFA000", bg:"#FFF8E1"};
+  return                    {label:"정상", color:"#43A047", bg:"#E8F5E9"};
 }
 function renderStats() {
   const total  = items.length;
-  const normal = items.filter(i=>status(i.stock,i.minStock).label==="정상").length;
-  const low    = items.filter(i=>status(i.stock,i.minStock).label==="부족").length;
+  const normal = items.filter(i=>status(i.stock).label==="정상").length;
+  const low    = items.filter(i=>status(i.stock).label==="부족").length;
   const out    = items.filter(i=>i.stock===0).length;
   document.getElementById("stats").innerHTML = [
     {label:"전체 재고", value:total,  color:"#3949AB", icon:"📦"},
@@ -375,7 +373,7 @@ function render() {
   const giftChecked = [...document.querySelectorAll('.gift-checkbox:checked')].map(el=>el.value);
   if (search) list = list.filter(i=>i.name.includes(search));
   if (cat !== "전체") list = list.filter(i=>i.category===cat);
-  if (sf  !== "전체") list = list.filter(i=>status(i.stock,i.minStock).label===sf);
+  if (sf  !== "전체") list = list.filter(i=>status(i.stock).label===sf);
   if (giftChecked.length > 0) list = list.filter(i=>giftChecked.includes(i.giftSet));
   if (sort==="stock_asc")       list.sort((a,b)=>a.stock-b.stock);
   else if (sort==="stock_desc") list.sort((a,b)=>b.stock-a.stock);
@@ -385,8 +383,8 @@ function render() {
   const tbody = document.getElementById("itemTbody");
   if (!list.length) { tbody.innerHTML=`<tr class="empty-row"><td colspan="13">검색 결과가 없습니다</td></tr>`; return; }
   tbody.innerHTML = list.map((item,idx)=>{
-    const st  = status(item.stock, item.minStock);
-    const pct = Math.min(100,(item.stock/Math.max(item.minStock*3,1))*100);
+    const st  = status(item.stock);
+    const pct = Math.min(100,(item.stock/90)*100);
     const dateCell = editingDateId===item.id
       ? `<div class="inline-date">
            <input type="date" id="dateInput_${item.id}" value="${item.inboundDate||''}"/>
@@ -444,7 +442,7 @@ function previewQuotation(input) {
 function openAdd() {
   editId=null;
   document.getElementById("modalTitle").textContent="➕ 재고 추가";
-  ["fName","fCost","fStock","fMinStock","fDate","fFleaPrice","fSupplier","fProdPeriod","fQuotation"].forEach(id=>document.getElementById(id).value="");
+  ["fName","fCost","fStock","fDate","fFleaPrice","fSupplier","fProdPeriod","fQuotation"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("fGiftSet").value="";
   document.getElementById("fCat").value="굿즈";
   document.getElementById("fNote").value="";
@@ -461,7 +459,6 @@ function openEdit(id) {
   document.getElementById("fName").value     =item.name;
   document.getElementById("fCost").value     =item.cost;
   document.getElementById("fStock").value    =item.stock;
-  document.getElementById("fMinStock").value =item.minStock;
   document.getElementById("fDate").value     =item.inboundDate||"";
   document.getElementById("fCat").value          =item.category;
   document.getElementById("fNote").value         =item.note||"";
@@ -489,7 +486,6 @@ async function saveItem() {
   const name  = document.getElementById("fName").value.trim();
   const cost  = document.getElementById("fCost").value;
   const stock = document.getElementById("fStock").value;
-  const min   = document.getElementById("fMinStock").value;
   const icon  = document.getElementById("fIcon").value||"📦";
   const date  = document.getElementById("fDate").value;
   const cat         = document.getElementById("fCat").value;
@@ -513,11 +509,11 @@ async function saveItem() {
   if (!name) { showToast("상품명을 입력해주세요","error"); return; }
   let target;
   if (editId) {
-    items  = items.map(i=>i.id===editId?{...i,name,cost:cost===""?i.cost:+cost,stock:stock===""?i.stock:+stock,minStock:min===""?i.minStock:+min,icon,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?i.fleaMarketPrice:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation}:i);
+    items  = items.map(i=>i.id===editId?{...i,name,cost:cost===""?i.cost:+cost,stock:stock===""?i.stock:+stock,icon,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?i.fleaMarketPrice:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation}:i);
     target = items.find(i=>i.id===editId);
     showToast(`"${name}" 재고가 수정되었습니다 ✅`);
   } else {
-    target = {id:Date.now(),name,cost:cost===""?0:+cost,stock:stock===""?0:+stock,minStock:min===""?0:+min,icon,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?null:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation};
+    target = {id:Date.now(),name,cost:cost===""?0:+cost,stock:stock===""?0:+stock,icon,inboundDate:date,category:cat,note,fleaMarketPrice:fleaPriceV===""?null:+fleaPriceV,giftSet,supplier,productionPeriod:prodPeriod,quotation};
     items.push(target);
     showToast(`"${name}" 재고가 추가되었습니다 ✅`);
   }
