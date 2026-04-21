@@ -29,6 +29,17 @@
   .filter-bar input, .filter-bar select { padding: 8px 12px; border-radius: 8px; border: 1px solid #DDD; font-size: 13px; outline: none; background: white; text-align: center; }
   .filter-bar input { flex: 1 1 160px; text-align: left; }
   .count-label { font-size: 12px; color: #aaa; margin-left: auto; }
+  .gift-filter { background: white; border-radius: 12px; padding: 10px 18px; margin-bottom: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .gift-filter .filter-title { font-size: 12px; font-weight: 700; color: #555; margin-right: 4px; white-space: nowrap; }
+  .gift-checkbox { display: none; }
+  .gift-label { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 2px solid #E8EAF6; color: #888; background: white; transition: all .15s; user-select: none; }
+  .gift-checkbox:checked + .gift-label { background: #3949AB; color: white; border-color: #3949AB; }
+  .quotation-wrap { margin-bottom: 14px; }
+  .file-upload-btn { display: inline-block; padding: 8px 16px; background: #E3F2FD; color: #1976D2; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; }
+  .file-upload-btn:hover { background: #BBDEFB; }
+  .quotation-current { margin-bottom: 8px; font-size: 12px; color: #555; }
+  .quotation-preview-img { max-width: 100%; max-height: 120px; border-radius: 8px; margin-top: 8px; display: block; }
+  .quotation-file-name { font-size: 12px; color: #555; margin-top: 6px; }
 
   /* TABLE */
   .table-wrap { background: white; border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; }
@@ -57,7 +68,7 @@
 
   /* MODAL */
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
-  .modal { background: white; border-radius: 18px; padding: 28px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal { background: white; border-radius: 18px; padding: 28px; width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal h2 { font-size: 18px; font-weight: 900; color: #1A237E; margin-bottom: 20px; }
   .form-label { font-size: 12px; font-weight: 700; color: #555; display: block; margin-bottom: 6px; }
   .form-input { width: 100%; padding: 9px 13px; border-radius: 9px; border: 1px solid #DDD; font-size: 13px; outline: none; margin-bottom: 14px; box-sizing: border-box; }
@@ -134,6 +145,14 @@
       </select>
       <span class="count-label" id="countLabel"></span>
     </div>
+    <div class="gift-filter">
+      <span class="filter-title">🎁 선물세트</span>
+      <input type="checkbox" class="gift-checkbox" id="gf1" value="졸업선물" onchange="render()"/><label class="gift-label" for="gf1">졸업선물</label>
+      <input type="checkbox" class="gift-checkbox" id="gf2" value="출산선물" onchange="render()"/><label class="gift-label" for="gf2">출산선물</label>
+      <input type="checkbox" class="gift-checkbox" id="gf3" value="멤버스"   onchange="render()"/><label class="gift-label" for="gf3">멤버스</label>
+      <input type="checkbox" class="gift-checkbox" id="gf4" value="VIP"      onchange="render()"/><label class="gift-label" for="gf4">VIP</label>
+      <input type="checkbox" class="gift-checkbox" id="gf5" value="직원용"   onchange="render()"/><label class="gift-label" for="gf5">직원용</label>
+    </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
@@ -171,13 +190,26 @@
     <label class="form-label">플리마켓 가격</label>
     <input class="form-input" type="number" id="fFleaPrice" placeholder=""/>
     <label class="form-label">선물세트</label>
-    <input class="form-input" type="text" id="fGiftSet" placeholder="선물세트명 입력 (선택)"/>
+    <select class="form-select" id="fGiftSet">
+      <option value="">선택 안함</option>
+      <option value="졸업선물">졸업선물</option>
+      <option value="출산선물">출산선물</option>
+      <option value="멤버스">멤버스</option>
+      <option value="VIP">VIP</option>
+      <option value="직원용">직원용</option>
+    </select>
     <label class="form-label">납품업체</label>
     <input class="form-input" type="text" id="fSupplier" placeholder="납품업체명 입력 (선택)"/>
     <label class="form-label">제작기간</label>
     <input class="form-input" type="text" id="fProdPeriod" placeholder="예: 2주, 30일 (선택)"/>
     <label class="form-label">견적서</label>
-    <input class="form-input" type="text" id="fQuotation" placeholder="링크 또는 메모 (선택)"/>
+    <div class="quotation-wrap">
+      <div class="quotation-current" id="quotationCurrent" style="display:none"></div>
+      <label class="file-upload-btn" for="fQuotationFile">📎 파일 선택 (이미지 · PDF · Excel)</label>
+      <input type="file" id="fQuotationFile" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" style="display:none" onchange="previewQuotation(this)"/>
+      <div id="quotationPreview"></div>
+      <input type="hidden" id="fQuotation"/>
+    </div>
     <label class="form-label">비고</label>
     <input class="form-input" type="text" id="fNote" placeholder="비고 입력 (선택)"/>
     <div class="modal-btns">
@@ -340,9 +372,11 @@ function render() {
   const sf     = document.getElementById("statusFilter").value;
   const sort   = document.getElementById("sortBy").value;
   let list = [...items];
+  const giftChecked = [...document.querySelectorAll('.gift-checkbox:checked')].map(el=>el.value);
   if (search) list = list.filter(i=>i.name.includes(search));
   if (cat !== "전체") list = list.filter(i=>i.category===cat);
   if (sf  !== "전체") list = list.filter(i=>status(i.stock,i.minStock).label===sf);
+  if (giftChecked.length > 0) list = list.filter(i=>giftChecked.includes(i.giftSet));
   if (sort==="stock_asc")       list.sort((a,b)=>a.stock-b.stock);
   else if (sort==="stock_desc") list.sort((a,b)=>b.stock-a.stock);
   else if (sort==="cost")       list.sort((a,b)=>b.cost-a.cost);
@@ -394,13 +428,29 @@ function buildIconGrid(selected) {
   document.getElementById("iconPreview").textContent = selected;
 }
 function selectIcon(ic) { document.getElementById("fIcon").value=ic; document.getElementById("iconPreview").textContent=ic; buildIconGrid(ic); }
+function previewQuotation(input) {
+  const file = input.files[0];
+  const preview = document.getElementById("quotationPreview");
+  if (!file) { preview.innerHTML=""; return; }
+  if (file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = e => { preview.innerHTML=`<img src="${e.target.result}" class="quotation-preview-img"/>`; };
+    reader.readAsDataURL(file);
+  } else {
+    preview.innerHTML=`<div class="quotation-file-name">📄 ${file.name}</div>`;
+  }
+}
 
 function openAdd() {
   editId=null;
   document.getElementById("modalTitle").textContent="➕ 재고 추가";
-  ["fName","fCost","fStock","fMinStock","fDate","fFleaPrice","fGiftSet","fSupplier","fProdPeriod","fQuotation"].forEach(id=>document.getElementById(id).value="");
+  ["fName","fCost","fStock","fMinStock","fDate","fFleaPrice","fSupplier","fProdPeriod","fQuotation"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("fGiftSet").value="";
   document.getElementById("fCat").value="굿즈";
   document.getElementById("fNote").value="";
+  document.getElementById("fQuotationFile").value="";
+  document.getElementById("quotationPreview").innerHTML="";
+  document.getElementById("quotationCurrent").style.display="none";
   buildIconGrid("📦");
   document.getElementById("modalForm").style.display="flex";
 }
@@ -420,6 +470,15 @@ function openEdit(id) {
   document.getElementById("fSupplier").value     =item.supplier||"";
   document.getElementById("fProdPeriod").value   =item.productionPeriod||"";
   document.getElementById("fQuotation").value    =item.quotation||"";
+  document.getElementById("fQuotationFile").value="";
+  document.getElementById("quotationPreview").innerHTML="";
+  const qCurr = document.getElementById("quotationCurrent");
+  if (item.quotation) {
+    qCurr.style.display="block";
+    qCurr.innerHTML = /\.(jpg|jpeg|png|gif|webp)/i.test(item.quotation)
+      ? `<img src="${item.quotation}" class="quotation-preview-img"/><div class="quotation-file-name" style="margin-top:4px">현재 파일 · 변경하려면 새 파일 선택</div>`
+      : `<a href="${item.quotation}" target="_blank" style="color:#3949AB;font-weight:700">📄 현재 파일 보기</a> <span style="color:#aaa;font-size:11px">· 변경하려면 새 파일 선택</span>`;
+  } else { qCurr.style.display="none"; }
   buildIconGrid(item.icon);
   document.getElementById("modalForm").style.display="flex";
 }
@@ -439,7 +498,18 @@ async function saveItem() {
   const giftSet     = document.getElementById("fGiftSet").value.trim();
   const supplier    = document.getElementById("fSupplier").value.trim();
   const prodPeriod  = document.getElementById("fProdPeriod").value.trim();
-  const quotation   = document.getElementById("fQuotation").value.trim();
+  let quotation = document.getElementById("fQuotation").value.trim();
+  const fileInput = document.getElementById("fQuotationFile");
+  if (fileInput.files[0]) {
+    const file = fileInput.files[0];
+    const ext  = file.name.split('.').pop();
+    const path = `${Date.now()}.${ext}`;
+    showToast("견적서 업로드 중...", "success");
+    const { error: upErr } = await supa.storage.from('quotations').upload(path, file, {upsert:true});
+    if (upErr) { showToast('견적서 업로드 실패: ' + upErr.message, 'error'); return; }
+    const { data: urlData } = supa.storage.from('quotations').getPublicUrl(path);
+    quotation = urlData.publicUrl;
+  }
   if (!name) { showToast("상품명을 입력해주세요","error"); return; }
   let target;
   if (editId) {
